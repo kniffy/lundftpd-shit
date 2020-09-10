@@ -1,0 +1,5 @@
+eyot-blowfish.o eyot-blowfish.o: blowfish.c ../config.h blowfish.h
+
+../config.h:
+
+blowfish.h:
