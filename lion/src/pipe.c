@@ -34,7 +34,7 @@
  *
  */
 
-// $Id: pipe.c,v 1.6 2010/10/26 06:38:41 lundman Exp $
+// $Id: pipe.c,v 1.5 2008/12/05 01:50:33 lundman Exp $
 // Pipe IO functions for the lnet library, fork, system.
 // Jorgen Lundman January 9th, 2003.
 
@@ -101,7 +101,7 @@ static int last_signal_status = 0;
 
 
 
-__RCSID("$LiON: lundman/lion/src/pipe.c,v 1.6 2010/10/26 06:38:41 lundman Exp $");
+__RCSID("$LiON: lundman/lion/src/pipe.c,v 1.5 2008/12/05 01:50:33 lundman Exp $");
 
 
 
@@ -176,7 +176,6 @@ connection_t *lion_fork(int (*start_address)(connection_t *, void *, void *),
 
 		// Clean up. We need to close everything, and free everything here
 		// except for "child_pipe" and its fd.
-
 		io_release_all( child_pipe );
 
 		// Ready up the childs pipe.

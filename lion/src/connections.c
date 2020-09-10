@@ -34,7 +34,7 @@
  *
  */
 
-// $Id: connections.c,v 1.7 2010/10/26 06:38:40 lundman Exp $
+// $Id: connections.c,v 1.6 2008/12/05 01:50:33 lundman Exp $
 // Temporary connection space holder
 // Jorgen Lundman November 5th, 1999
 
@@ -100,7 +100,7 @@ connection_t *connections_new(void)
 
   // clear it
   memset(result, 0, sizeof(*result));
-  //result->trace=1;
+
 
   // Add it to linked list
   result->next = connections_head;

@@ -34,7 +34,7 @@
  *
  */
 
-// $Id: file.c,v 1.5 2011/01/23 00:06:56 lundman Exp $
+// $Id: file.c,v 1.6 2011/06/13 06:23:42 lundman Exp $
 // File IO functions for the lion library
 // Jorgen Lundman January 8th, 2003.
 
@@ -77,7 +77,7 @@ extern const char *const sys_errlist[];
 
 
 
-__RCSID("$LiON: lundman/lion/src/file.c,v 1.5 2011/01/23 00:06:56 lundman Exp $");
+__RCSID("$LiON: lundman/lion/src/file.c,v 1.6 2011/06/13 06:23:42 lundman Exp $");
 
 
 
@@ -115,7 +115,80 @@ connection_t *lion_open(char *file, int flags, mode_t modes,
         // This works best on NetBSD for some reason.
 		newd->socket = open( file, flags | O_EXLOCK | O_NONBLOCK, modes );
 
+#elif defined F_SHARE
+        {
+            struct fshare locker;
+            int ret;
+            locker.f_access = (flags&O_RDONLY) ? F_RDACC : F_WRACC;
+            locker.f_deny = F_RDDNY;
+
+            // Does the file already exist?
+            newd->socket = open( file, O_RDWR, modes );
+            if (newd->socket >= 0) {
+
+                // id should just be something unique, and filedes are that
+                locker.f_id = newd->socket;
+
+                // Solaris will automatically lock it in open() if mount
+                // option nbmand is set, so first remove that lock
+                ret = fcntl( newd->socket, F_UNSHARE, &locker);
+
+                ret = fcntl( newd->socket, F_SHARE, &locker);
+                if (ret == -1) {
+
+                    // Did not get lock, fail the open
+                    close(newd->socket);
+                    newd->socket = -1;
+
+                } else { // lock worked?
+
+                    // Got lock, do we truncate? Append?
+                    if (flags|O_TRUNC)
+                        ftruncate(newd->socket, 0);
+                    if (flags|O_APPEND)
+                        lseek(newd->socket, SEEK_END, 0);
+
+                }
+
+            } else { // existing file, creating file
+
+                newd->socket = open( file, flags|O_EXCL, modes );
+                if (newd->socket >= 0) {
+
+                    // id should just be something unique, and fd's are that
+                    locker.f_id = newd->socket;
+                    ret = fcntl( newd->socket, F_SHARE, &locker);
+
+                    // Failed to lock..
+                    if (ret == -1) {
+                        close(newd->socket);
+                        newd->socket = -1;
+                    } // lock worked?
+
+                } // created
+
+            } // existing/created
+
+        }
+
+#elif defined LOCK_EX
+
+        // this will not work
+
+		newd->socket = open( file, flags, modes );
+
+		if (newd->socket >= 0) {
+			if (flock(newd->socket, LOCK_EX|LOCK_NB)) {
+				close(newd->socket);
+				newd->socket = -1;
+			}
+		}
+
 #elif defined F_SETLK
+        // FCNTL LOCKING WILL NOT WORK. fcntl locks do not stop
+        // the same process (same PID) from locking against itself
+        // which means it is meaningless in lion situations.
+        // We could fork() to test locks... but ick..
 		{
 			struct flock locker;
             memset(&locker, 0, sizeof(locker));

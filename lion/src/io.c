@@ -33,7 +33,7 @@
  *
  */
 
-// $Id: io.c,v 1.34 2011/01/21 08:27:28 lundman Exp $
+// $Id: io.c,v 1.31 2009/10/02 02:50:49 lundman Exp $
 // Core input output functions, the main select() call and misc connectivity
 // Jorgen Lundman November 5th, 1999
 
@@ -121,7 +121,7 @@
 
 //#define DEBUG
 
-__RCSID("$LiON: lundman/lion/src/io.c,v 1.34 2011/01/21 08:27:28 lundman Exp $");
+__RCSID("$LiON: lundman/lion/src/io.c,v 1.31 2009/10/02 02:50:49 lundman Exp $");
 
 
 
@@ -2844,11 +2844,9 @@ void lion_disconnect(connection_t *node)
 
 int io_release_all_sub( connection_t *node, void *arg1, void *arg2)
 {
-
 #ifdef DEBUG_VERBOSE
 	printf("io_release_all_sub(): %p %p\n", node, arg2);
 #endif
-
 
 	if (arg2 && (arg2 == (void *) node))  // is it the node to skip?
 		return 1; // iterate to the next one.
@@ -2860,22 +2858,7 @@ int io_release_all_sub( connection_t *node, void *arg1, void *arg2)
 
 	node->status = ST_DISCONNECT;
 
-    // The thing here is, as a child, in unix, we can/should close all 'fds'
-    // that we inherit, (but not on Windows), but, the ->ctx for TLS connections
-    // point to the same ctx, and should not be released as child.
-    // In Unix, we can simply overwrite ->ctx, to trigger a COW, and skip it.
-    // On Windows, it is just one node/ptr, so we can not modify it.
-#ifndef WIN32
-#ifdef WITH_SSL
-    if (arg2)
-        node->ctx = NULL;
-#endif
-
-    // Close socket.
-    lion_disconnect( node ); // refering to node after this call is illegal.
-
-#endif
-
+	lion_disconnect( node ); // refering to node after this call is illegal.
 	connections_free( node );
 
 	return 0;  // Since we delete this node, STOP iterating!
@@ -3900,22 +3883,7 @@ int io_getline(connection_t *node, char **last)
 							node,
 							left);
 
-
-                if (node->inbuffer >= node->inbuffer_size) {
-
-                    if (node->trace)
-                        fprintf(trace_file, "%p: full buffer without a newline, returning entire buffer\r\n",
-                                node);
-                    // But we do need to terminate the string. This is why we allocate
-                    // +1 byte on buffers.
-                    node->buffer[ node->inbuffer_size-1 ] = 0;
-                    node->inbuffer = 0;
-                    next = NULL;
-                    return 0;
-                }
-
-
-			} // some left
+			}
 
 			// stop processing
 			return 0;
@@ -3959,21 +3927,13 @@ int io_getline(connection_t *node, char **last)
 		}
 
 
-        // If we have a whole buffer full, but not a single newline, we need to
-        // abort looking for newlines, and just return the full buffer. It is
-        // up to the developer to increase buffer_size, or handle fragmented
-        // strings.
-		if ((next > (node->buffer + node->inbuffer_size)) /*||
-            (node->inbuffer >= node->inbuffer_size)*/) {
+		/* This next should never happen */
+		/* But we check for it just incase. I've never seen it yet. */
 
-            if (node->trace)
-                fprintf(trace_file, "%p: full buffer without a newline, returning entire buffer\r\n",
-                        node);
-            // But we do need to terminate the string. This is why we allocate
-            // +1 byte on buffers.
-            node->buffer[ node->inbuffer_size-1 ] = 0;
+		//    if ((next > node->buffer + BUFFER_SIZE)) {
+		if ((next > node->buffer + node->inbuffer_size)) {
+			fprintf(stderr,"Internal Error, most likely due to a bug\r\n");
 			node->inbuffer = 0;
-            next = NULL;
 			return 0;
 		}
 

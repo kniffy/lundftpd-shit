@@ -116,6 +116,8 @@ char *unix_uid2name(unsigned long uid)
 	struct passwd *pw;
 	char *ret;
 
+
+
 	if (dirlist_child_uid_lookup) {
 
 		ret = dirlist_child_uid_lookup(uid);
@@ -124,9 +126,8 @@ char *unix_uid2name(unsigned long uid)
 
 	}
 
-	pw = getpwuid( uid ) ;
 
-	if (( pw )) {
+	if (( pw = getpwuid( uid ) )) {
 
 		return strdup( pw->pw_name );
 
@@ -189,6 +190,7 @@ void add_entry(  char *name,
 	file_t *newf;
 	file_t **tmp_ptr = NULL;
 
+
 	if ( !file_entries ||
 		 (num_entries >= allocated)) { // Grow the list.
 
@@ -207,6 +209,7 @@ void add_entry(  char *name,
 		file_entries = tmp_ptr;
 
 	}
+
 
 	newf = (file_t *) malloc( sizeof(*newf));
 
@@ -227,12 +230,12 @@ void add_entry(  char *name,
 	newf->date = date;
 	newf->size = size;
 
-
 	// Then the optionals...
 	if (name)
 		newf->name = strdup( name );
 	if (perm)
 		newf->perm = strdup( perm );
+
 
 
 	newf->user = unix_uid2name( user );
@@ -245,17 +248,14 @@ void add_entry(  char *name,
 		char *oldpath, genre[22], *g; // Max genre?
 		FILE *f;
 
-
 		// remember where we are.
 		oldpath = getcwd(NULL, 8192);
-
 
 		// if we can go one lower...
 		if (!chdir( name )) {
 
 			// attempt to open the .genre file..
 			if ((f = fopen(".genre", "r"))) {
-
 
 				memset(genre, 0, sizeof(genre));
 				fgets(genre, sizeof(genre)-1, f);
@@ -278,7 +278,6 @@ void add_entry(  char *name,
 		SAFE_FREE(oldpath);
 
 	} // if DIRLIST
-
 
 	if (!newf->group)
 		newf->group = unix_gid2name( group );

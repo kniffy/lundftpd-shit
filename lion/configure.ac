@@ -1,4 +1,4 @@
-AC_INIT([liblion],[2.6], [bug-report@lundman.net])
+AC_INIT([liblion],[2.4], [bug-report@lundman.net])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([foreign])
 # The big search for OpenSSL
@@ -34,7 +34,7 @@ fi
 
 dnl ------------------------------------------------------
 dnl Where do you live, openssl?  And how do we call you?
-AC_ARG_WITH([openssl],
+AC_ARG_WITH([openssl], 
             [AS_HELP_STRING([--without-openssl],[Disable openssl support])],
             [],
             [with_openssl=yes])
