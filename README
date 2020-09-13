@@ -7,3 +7,32 @@ then,
 make
 
 from there you are smart enough to figure things out :)
+
+--xx--
+
+	DIRECTORY LISTING:
+in lftp it seems that by default dirlists are out of order!
+so here is some documentation on what list options exist
+
+	-N	sort by name
+	-r	reverse sort
+	-R	recursive sort (says disabled in code comments)
+	-t	sort by date
+	-S	sort by size
+	-a	"show dot" mode
+	-X	xml output mode
+	-1	"short" list?
+	-I	sort by case
+	-D	sort with directories first
+	-W	show dirsize (but thats already in lists?)
+	-G	show genre (??)
+
+obviously, to use these you simply edit your client's config
+eg in lftp:
+	set ftp:list-options "-N"
+
+or, if you need a sane global option with a fix just for a
+lundftpd site:
+	set ftp:list-options "-la"
+	set ftp:list-options/example.com "-N"
+
