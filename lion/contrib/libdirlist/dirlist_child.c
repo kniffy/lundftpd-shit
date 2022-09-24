@@ -115,7 +115,8 @@ void dirlist_child_hide_file(char *hideme)
 	if (dirlist_child_hide_num >= dirlist_child_hide_allocated) {
 
 		newd = realloc(dirlist_child_hide_files,
-					   dirlist_child_hide_allocated + HIDE_FILES_INCREMENT);
+				(dirlist_child_hide_allocated + HIDE_FILES_INCREMENT) *
+				sizeof(char *));
 
 		if (!newd) {
 
