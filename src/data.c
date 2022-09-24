@@ -514,7 +514,7 @@ int data_handler( lion_t *handle,
 			// UPLOAD. Classic, wiping files randomly.
 			if (d->name && *d->name &&
 				(d->type & DATA_STOR)) {
-				if (section_deletebad(d->name)) {
+					if (section_deletebad(d->name)) {
 
 				char *p;
 
@@ -532,6 +532,13 @@ int data_handler( lion_t *handle,
 				race_file_deleted(d->name, p);
 				pathfixsplit(d->name, p);
 #endif
+			} else {
+				// File failed, make it writable by others
+				file_goroot();
+				chmod(d->name, (mode_t) 0666);
+				file_gononroot();
+				}
+
 			} else {
 
 				// Update the bytes counter stats. Needs to be done while we
@@ -615,7 +622,14 @@ int data_handler( lion_t *handle,
 			data_update_stats(d);
 
 			// We remote STOR so we don't enter check_isbad code.
-			d->type &= ~DATA_STOR;
+			// We remove STOR so we don't enter check_isbad code.
+			if (d->type & DATA_STOR) {
+				d->type &= ~DATA_STOR;
+				if (d->name) {
+					consolef("Deleting file: '%s'\n", d->name);
+					remove(d->name);
+				}
+			}
 
 			lion_disconnect(d->handle);
 
@@ -1257,8 +1271,8 @@ void data_set_arguments(struct data_node *nd, char *args)
 	int name = 0;
 
 	// If site extra is set on, we set -W on automatically as well.
-	if (nd->login->options & UO_FANCY)
-		nd->sort_by ^= DIRLIST_SHOW_DIRSIZE;
+	//if (nd->login->options & UO_FANCY)
+	//	nd->sort_by ^= DIRLIST_SHOW_DIRSIZE;
 
 	i = 0;
 
@@ -1665,7 +1679,7 @@ struct data_node *data_stor(struct login_node *t, char *args, int flags)
 
 	if (!nd->althandle) {
 	  lion_disconnect(nd->handle);
-	  return; // It failed.
+	  return NULL; // It failed.
 	}
 
 	// Success. Ready open the load.
